@@ -1,70 +1,64 @@
-"""
-Django settings for construction_manager project.
-Render Deployment Configuration by AI Assistant.
-"""
-
+import os
 from pathlib import Path
-from datetime import timedelta 
-import os # <--- დავამატეთ: გარემოცვის ცვლადებისთვის
-import dj_database_url # <--- დავამატეთ: PostgreSQL-ის კონფიგურაციისთვის
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# =======================================================
-# 1. DEVELOPMENT / PRODUCTION CONTROL
-# =======================================================
 
-# Production-ის დროს, ეს ცვლადი Render-ზე იქნება დაყენებული.
-# თუ ეს ცვლადი არსებობს, ვმუშაობთ PRODUCTION-ზე, თუ არა - DEVELOPMENT-ზე.
-IS_RENDER_DEPLOYMENT = 'RENDER' in os.environ
+# =======================================================================
+# 1. ENVIRONMENT & SECURITY
+# =======================================================================
 
-# SECRET_KEY - მუდმივად უნდა იქნას წაკითხული გარემოცვის ცვლადებიდან PRODUCTION-ში
+# ლოკალური ტესტირებისთვის, თუ RENDER_EXTERNAL_HOSTNAME არ არის
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+
+# DEBUG: ლოკალურად არის True, Production-ზე (Render-ზე) False
+# Render-ზე ვიყენებთ გარემოცვის ცვლადს DJANGO_DEBUG
+DEBUG = 'DJANGO_DEBUG' not in os.environ and 'DEBUG' in os.environ
+
+# SECRET_KEY: აუცილებელია Production-ისთვის!
 SECRET_KEY = os.environ.get(
-    'SECRET_KEY', 
-    'django-insecure-r4vjc46i)4il9fh5*heud&t#%2p@h*=701cq=#kxa^czh!6a^a' # ლოკალური გასაღები
+    "SECRET_KEY", 
+    "django-insecure-default-key-for-local-development-must-be-changed-in-production"
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-if IS_RENDER_DEPLOYMENT:
-    DEBUG = False
-else:
-    DEBUG = True # ლოკალური მუშაობისთვის
+# ALLOWED_HOSTS: Production-ზე გვჭირდება Render-ის მისამართი
+ALLOWED_HOSTS = []
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# =======================================================
-# 2. ALLOWED HOSTS (დომენის ნებართვები)
-# =======================================================
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+# =======================================================================
+# 2. APPLICATION DEFINITION
+# =======================================================================
 
-if IS_RENDER_DEPLOYMENT:
-    # Render-ის დომენების მიღება
-    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-    if RENDER_EXTERNAL_HOSTNAME:
-        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    
-    # ეს დაშვებულია მხოლოდ Render-ისთვის. 
-    # თუ DEBUG=False, Django არ მიიღებს კავშირებს თუ ჰოსტი დაუდასტურებელია.
-    
-# --- INSTALLED APPS (უცვლელი) ---
 INSTALLED_APPS = [
+    # Django Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Third-party apps
+
+    # Third Party Apps
     'rest_framework',
-    'rest_framework_simplejwt',
     'django_filters',
-    # Local apps
-    'core', 
-    'tasks', 
+    'rest_framework_simplejwt',
+    
+    # Your Apps
+    'core',
+    'tasks', # დავუშვათ, რომ თქვენი აპლიკაცია tasks-ია
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    
+    # WhiteNoise Middleware for serving static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,22 +66,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-# --- Static files (Production Configuration) ---
-# აუცილებელია Render-ისთვის, რომ სტატიკური ფაილები (CSS, JS) სწორად დაამუშაოს.
-
-STATIC_URL = 'static/'
-
-if IS_RENDER_DEPLOYMENT:
-    # Production-ში Django აგროვებს სტატიკურ ფაილებს ამ დირექტორიაში
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    
-    # უსაფრთხოების დაჩქარება: HTTPS გადამისამართება
-    SECURE_SSL_REDIRECT = True
-    
-    # პროქსიდან უსაფრთხო კავშირების მიღება
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
 
 ROOT_URLCONF = 'construction_manager.urls'
 
@@ -98,6 +76,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -109,20 +88,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'construction_manager.wsgi.application'
 
 
-# =======================================================
-# 3. DATABASE CONFIGURATION (SQLite vs. PostgreSQL)
-# =======================================================
+# =======================================================================
+# 3. DATABASE (Production/Development)
+# =======================================================================
 
-if IS_RENDER_DEPLOYMENT:
-    # PRODUCTION: გამოიყენება Render-ის DATABASE_URL ცვლადი PostgreSQL-ისთვის
+# PostgreSQL-ის კონფიგურაცია Render-ისთვის (Production)
+if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
+            conn_max_age=600
         )
     }
+# SQLite კონფიგურაცია (Local Development)
 else:
-    # DEVELOPMENT: ლოკალურად იყენებს SQLite-ს
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -131,7 +110,10 @@ else:
     }
 
 
-# --- Password validation (უცვლელი) ---
+# =======================================================================
+# 4. AUTH & VALIDATION
+# =======================================================================
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -148,37 +130,50 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# --- Internationalization (უცვლელი) ---
+# =======================================================================
+# 5. INTERNATIONALIZATION
+# =======================================================================
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
 
-# Default primary key field type
+# =======================================================================
+# 6. STATIC FILES (CSS, JS, Images) - CRITICAL FOR ADMIN UI
+# =======================================================================
+
+# Base URL for static assets (e.g. /static/)
+STATIC_URL = 'static/'
+
+# Directory where Django will collect static files in Production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Extra directories where static files reside (e.g. global static assets)
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# Configure static file storage to use WhiteNoise for compressed files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# =======================================================================
+# 7. DEFAULT PRIMARY KEY FIELD TYPE
+# =======================================================================
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# =======================================================================
+# 8. REST FRAMEWORK SETTINGS (Optional, but useful)
+# =======================================================================
 
-# =======================================================
-# 4. CUSTOM & API SETTINGS (უცვლელი)
-# =======================================================
-
-# Custom User Model-ის განსაზღვრა
-AUTH_USER_MODEL = 'core.User' 
-
-# REST Framework Settings (JWT-ს გამოყენებით)
 REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-}
-
-# Simple JWT Settings
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "AUTH_HEADER_TYPES": ("Bearer",),
 }
