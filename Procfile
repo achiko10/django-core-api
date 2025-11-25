@@ -1,0 +1,1 @@
+web: gunicorn construction_manager.wsgi:application
