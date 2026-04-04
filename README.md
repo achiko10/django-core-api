@@ -4,13 +4,13 @@
 [View Live Application](https://achi717.pythonanywhere.com/login/?next=/dashboard/)
 
 ## Description
-This is a robust Full-stack Backend API built with Django REST Framework. It features secure authentication, database management, and a scalable architecture, designed to power dynamic web applications.
+This project serves as the backend for a Django-based web application, providing robust API endpoints, user authentication, and data management. It's a foundational component for a full-stack solution.
 
 ## Technologies
 - Python
 - Django REST Framework
 - PostgreSQL
-- Docker
+- Web Development
 
 ## Installation
 ```bash
@@ -22,7 +22,7 @@ python manage.py runserver
 ```
 
 ## Usage
-Access the API endpoints for user authentication, data management, and other functionalities. Refer to the API documentation (if available) for detailed usage.
+This is a backend service. Interact with its API endpoints using tools like Postman or integrate it with a frontend application. Refer to the API documentation (if available) for details.
 
 ## Testing
 (Coming Soon: Unit tests will be added to ensure code reliability and functionality.)
@@ -33,13 +33,13 @@ Access the API endpoints for user authentication, data management, and other fun
 [აპლიკაციის ნახვა](https://achi717.pythonanywhere.com/login/?next=/dashboard/)
 
 ## აღწერა
-ეს არის მძლავრი Full-stack ბექენდ API, რომელიც აგებულია Django REST Framework-ზე. ის მოიცავს უსაფრთხო ავთენტიფიკაციას, მონაცემთა ბაზის მართვას და სკალირებად არქიტექტურას, შექმნილია დინამიური ვებ აპლიკაციების გასაძლიერებლად.
+ეს პროექტი წარმოადგენს Django-ზე დაფუძნებული ვებ აპლიკაციის ბექენდს, რომელიც უზრუნველყოფს მძლავრ API ენდპოინტებს, მომხმარებლის ავთენტიფიკაციას და მონაცემთა მართვას. ის არის სრული სტეკის გადაწყვეტის ფუნდამენტური კომპონენტი.
 
 ## ტექნოლოგიები
 - Python
 - Django REST Framework
 - PostgreSQL
-- Docker
+- ვებ დეველოპმენტი
 
 ## ინსტალაცია
 ```bash
@@ -51,7 +51,7 @@ python manage.py runserver
 ```
 
 ## გამოყენება
-გამოიყენეთ API-ის ენდპოინტები მომხმარებლის ავთენტიფიკაციისთვის, მონაცემთა მართვისთვის და სხვა ფუნქციონალისთვის. დეტალური გამოყენებისთვის იხილეთ API დოკუმენტაცია (ასეთის არსებობის შემთხვევაში).
+ეს არის ბექენდ სერვისი. მასთან ინტერაქცია შესაძლებელია API ენდპოინტების მეშვეობით ისეთი ხელსაწყოების გამოყენებით, როგორიცაა Postman, ან მისი ინტეგრირება ფრონტენდ აპლიკაციასთან. დეტალებისთვის იხილეთ API დოკუმენტაცია (ასეთის არსებობის შემთხვევაში).
 
 ## ტესტირება
 (მალე: დაემატება Unit ტესტები კოდის საიმედოობისა და ფუნქციონალურობის უზრუნველსაყოფად.)
